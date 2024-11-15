@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import Peer from 'simple-peer';
 import './App.css';
 
-const socket = io('http://192.168.21.38:5000'); // เปลี่ยนเป็น IP ของคุณสำหรับการทดสอบบนเครื่องอื่น
+const socket = io('http://192.168.19.38:5000'); // เปลี่ยนเป็น IP ของเครื่อง backend
 
 function App() {
   const [roomId, setRoomId] = useState('');
@@ -30,35 +30,22 @@ function App() {
     });
 
     async function getMedia() {
-      try {
-        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
           const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
           videoStream.current = stream;
           if (userVideo.current) {
             userVideo.current.srcObject = stream;
           }
-          console.log("Camera and microphone access granted");
-        } else {
-          console.error("Media devices are not supported in this browser.");
-          alert("เบราว์เซอร์ของคุณไม่รองรับการใช้งานกล้องและไมโครโฟน กรุณาใช้เบราว์เซอร์ Chrome, Firefox หรือ Edge รุ่นใหม่");
-        }
-      } catch (err) {
-        if (err.name === "NotAllowedError") {
-          alert("กรุณาอนุญาตการเข้าถึงกล้องและไมโครโฟน");
-          console.error("Permission denied for camera and microphone");
-        } else if (err.name === "NotFoundError") {
-          alert("ไม่พบกล้องหรือไมโครโฟน กรุณาตรวจสอบอุปกรณ์");
-          console.error("No camera or microphone found");
-        } else if (err.name === "NotReadableError") {
-          alert("ไม่สามารถเข้าถึงกล้องหรือไมโครโฟนได้ อาจมีแอปพลิเคชันอื่นกำลังใช้งานอยู่");
-          console.error("Camera or microphone is already in use");
-        } else {
-          alert("เกิดข้อผิดพลาดในการเข้าถึงกล้องและไมโครโฟน");
+        } catch (err) {
           console.error("Error accessing media devices", err);
+          alert("กรุณาอนุญาตการเข้าถึงกล้องและไมโครโฟนเพื่อใช้งานแอปนี้");
         }
+      } else {
+        console.error("Media devices are not supported in this browser.");
+        alert("เบราว์เซอร์ของคุณไม่รองรับการใช้งานกล้องและไมโครโฟน");
       }
     }
-
 
     getMedia();
 
