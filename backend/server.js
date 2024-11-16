@@ -1,88 +1,93 @@
 import express from 'express';
-import http from 'http';
+import https from 'https';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import fs from 'fs';
+import dotenv from 'dotenv';
+import authRoutes from './routes/auth.routes.js';
+import roomRoutes from './routes/room.routes.js';
+import connectDatabase from './config/database.js';
+
+dotenv.config();
+
+// SSL Configuration
+const options = {
+  key: fs.readFileSync('../localhost+4-key.pem'),
+  cert: fs.readFileSync('../localhost+4.pem'),
+  // key: fs.readFileSync('../localhost+3-key.pem'),
+  // cert: fs.readFileSync('../localhost+3.pem'),
+};
 
 const app = express();
-const server = http.createServer(app);
+const server = https.createServer(options, app);
 const io = new Server(server, {
   cors: {
-    origin: '*', // เปลี่ยนตาม IP ของเครื่องคุณที่รัน frontend
+    // origin: '*',
+    origin: 'https://192.168.19.38:3000', // Use your HTTPS frontend origin
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
-app.use(cors());
+
+// app.use(cors());
+// app.use(cors({
+//   origin: 'https://192.168.19.38:3000',
+//   methods: ['GET', 'POST', 'OPTIONS'],
+//   credentials: true,
+// }));
+
+
+app.use(cors({
+  origin: 'https://192.168.19.38:3000',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  credentials: true,
+}));
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://192.168.19.38:3000');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  next();
+});
+
 app.use(express.json());
 
-const rooms = {}; // เพื่อเก็บข้อมูลห้องและสมาชิกในแต่ละห้อง
+// Database Connection
+connectDatabase();
 
+
+// Routes
 app.get('/', (req, res) => {
-  res.send('Welcome to the Online Video Calls Server!');
+  res.send('Welcome to MDES Meet Backend!');
 });
+app.use('/auth', authRoutes);
+app.use('/rooms', roomRoutes);
 
+// WebSocket Events
 io.on('connection', (socket) => {
-    console.log('a user connected:', socket.id);
+  console.log(`User connected: ${socket.id}`);
 
-    const updateOnlineUsers = () => {
-      io.emit('update-online-users', io.engine.clientsCount); // ส่งจำนวนผู้ใช้งานให้ทุก client
-    };
-  
-    updateOnlineUsers();
-  
-
-    socket.on('disconnect', () => {
-        for (const roomId in rooms) {
-          rooms[roomId] = rooms[roomId].filter(id => id !== socket.id);
-          io.to(roomId).emit('room-users', rooms[roomId]);
-          if (rooms[roomId].length === 0) {
-            delete rooms[roomId];
-          }
-        }
-        console.log('user disconnected:', socket.id);
-        updateOnlineUsers(); // อัปเดตจำนวนผู้ใช้ออนไลน์เมื่อมีการ disconnect
-      });
-
-  socket.on('join-room', (roomId) => {
+  socket.on('join-room', ({ roomId }) => {
     socket.join(roomId);
-    if (!rooms[roomId]) {
-      rooms[roomId] = [];
-    }
-    rooms[roomId].push(socket.id);
-    io.to(roomId).emit('room-users', rooms[roomId]); // แจ้งสมาชิกในห้อง
-    console.log(`User ${socket.id} joined room: ${roomId}`);
+    console.log(`User joined room: ${roomId}`);
+    socket.to(roomId).emit('user-joined', { userId: socket.id });
   });
 
-  socket.on('leave-room', (roomId) => {
-    socket.leave(roomId);
-    if (rooms[roomId]) {
-      rooms[roomId] = rooms[roomId].filter(id => id !== socket.id);
-      io.to(roomId).emit('room-users', rooms[roomId]); // แจ้งสมาชิกในห้อง
-      if (rooms[roomId].length === 0) {
-        delete rooms[roomId]; // ลบห้องถ้าไม่มีผู้ใช้อยู่
-      }
-    }
-    console.log(`User ${socket.id} left room: ${roomId}`);
+  socket.on('send-signal', (payload) => {
+    io.to(payload.userToSignal).emit('receive-signal', payload);
   });
 
-  socket.on('send-message', (roomId, message) => {
-    io.to(roomId).emit('receive-message', { message, sender: socket.id });
+  socket.on('return-signal', (payload) => {
+    io.to(payload.callerId).emit('receive-return-signal', payload);
   });
 
-//   socket.on('disconnect', () => {
-//     for (const roomId in rooms) {
-//       rooms[roomId] = rooms[roomId].filter(id => id !== socket.id);
-//       io.to(roomId).emit('room-users', rooms[roomId]);
-//       if (rooms[roomId].length === 0) {
-//         delete rooms[roomId];
-//       }
-//     }
-//     console.log('user disconnected:', socket.id);
-//     updateOnlineUsers();
-//   });
+  socket.on('disconnect', () => {
+    console.log(`User disconnected: ${socket.id}`);
+  });
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

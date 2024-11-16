@@ -1,0 +1,120 @@
+.app-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f8ff; /* สีพื้นหลัง */
+    opacity: .999;
+}
+  
+.title {
+font-size: 24px;
+font-weight: 600;
+margin-top: 10px;
+}
+
+
+.room-info, .input-field, .btn {
+margin: 10px 0;
+}
+
+.qr-code {
+margin-top: 10px;
+}
+
+.background-video {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+object-fit: cover;
+z-index: -1; /* ทำให้วิดีโออยู่ล่างสุด */
+}
+
+.join-container {
+background-color: rgba(144, 238, 144, 0.8); /* สีขาวอมเขียวโปร่งใส */
+padding: 20px;
+border-radius: 10px;
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+
+    
+  
+.join-container, .video-container {
+position: relative;
+z-index: 1; /* ทำให้เนื้อหาอยู่ด้านบน */
+}
+
+
+
+.input-field {
+width: 80%;
+padding: 12px;
+margin-bottom: 15px;
+border-radius: 8px;
+}
+
+.btn {
+padding: 10px 20px;
+border-radius: 8px;
+cursor: pointer;
+}
+
+.video-container {
+width: 100%;
+max-width: 800px;
+display: flex;
+flex-direction: column;
+align-items: center;
+}
+
+.user-video, .peer-video {
+width: 100%;
+max-width: 450px;
+border-radius: 8px;
+}
+
+.controls {
+margin-top: 15px;
+}
+
+.chat-container {
+width: 100%;
+max-width: 400px;
+border-top: 1px solid #ddd;
+padding-top: 10px;
+}
+
+.chat-messages {
+max-height: 200px;
+overflow-y: auto;
+margin-bottom: 10px;
+}
+
+.chat-input {
+width: 80%;
+padding: 8px;
+margin-right: 5px;
+border-radius: 8px;
+}
+  
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #333;
+    font-size: 14px;
+  }
+  
+  .footer-left, .footer-right {
+    color: #555;
+  }
+  
